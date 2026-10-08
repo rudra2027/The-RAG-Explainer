@@ -1,0 +1,18 @@
+[
+  {
+    "question": "How many days of paid annual leave does a full-time employee get?",
+    "reference": "Full-time employees receive 24 days of paid annual leave per calendar year, and up to 5 unused days can be carried over until 31 March."
+  },
+  {
+    "question": "Why are SMS codes not allowed for multi-factor authentication?",
+    "reference": "SMS codes are not allowed because they can be intercepted through SIM-swap attacks; the approved method is the Nimbus Authenticator app."
+  },
+  {
+    "question": "What is the hotel budget per night during business travel?",
+    "reference": "The hotel budget is 180 EUR per night in major cities and 120 EUR per night elsewhere."
+  },
+  {
+    "question": "How much does the Team plan of Nimbus Insight cost?",
+    "reference": "The Team plan costs 199 USD per month and includes 15 users and unlimited dashboards; annual billing gives a 20% discount."
+  }
+]

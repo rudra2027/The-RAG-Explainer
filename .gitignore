@@ -1,0 +1,7 @@
+.venv/
+.env
+data/uploads/
+__pycache__/
+.deepeval/
+*.pyc
+.claude/

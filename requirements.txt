@@ -1,0 +1,30 @@
+# --- Web layer: FastAPI backend + live progress events (SSE) ---
+fastapi
+uvicorn[standard]
+python-multipart        # lets FastAPI accept file uploads
+python-dotenv           # reads API keys from .env
+
+# --- Typed shapes: Chunk, RetrievalResult, ToolArgs, EvalScore ---
+pydantic>=2
+
+# --- LLM: OpenAI models through OpenRouter (OpenAI-compatible API) ---
+openai>=1.100
+
+# --- Vector database + keyword search ---
+pinecone>=7             # serverless vector DB (dense search + metadata filters)
+grpcio                  # Pinecone's fast binary upload channel (falls back to HTTPS without it)
+rank-bm25               # BM25 keyword scoring (sparse search)
+numpy                   # PCA for the 3D embedding map
+
+# --- LangChain: loaders, splitters, embeddings, prompt template ---
+langchain-core
+langchain-community<0.4   # ragas 0.4.3 still imports a module removed in 0.4
+langchain-text-splitters
+langchain-huggingface
+pypdf                   # PDF loader backend
+sentence-transformers   # local embeddings + cross-encoder re-ranker
+
+# --- Evals + tracing ---
+ragas>=0.4.3            # 0.4 "collections" metrics API
+deepeval>=4.2
+langsmith

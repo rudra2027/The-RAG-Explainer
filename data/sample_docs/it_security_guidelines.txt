@@ -1,0 +1,19 @@
+NIMBUS ANALYTICS - IT SECURITY GUIDELINES
+
+Passwords
+All company passwords must be at least 14 characters long and must not be reused across systems. Passwords for the single sign-on account expire every 90 days. Employees must use the company password manager (Vaultly) to store work credentials. Never share a password by email or chat, even with the IT team: IT will never ask you for your password.
+
+Multi-factor authentication
+Multi-factor authentication (MFA) is mandatory for email, the HR portal, the code repositories and the VPN. The approved MFA method is the Nimbus Authenticator app. SMS codes are not allowed because they can be intercepted through SIM-swap attacks.
+
+VPN and remote work
+When working outside the office, employees must connect through the company VPN before accessing internal systems. The VPN is required on any public wifi network, including hotels, airports and cafes. Split tunnelling is disabled, so all traffic goes through the VPN while it is connected.
+
+Laptops
+Company laptops are encrypted with full-disk encryption and must be locked whenever unattended. Laptops must not be left in a car overnight. A lost or stolen laptop must be reported to the IT service desk within 1 hour, by phone on extension 4400, so the device can be wiped remotely.
+
+Phishing
+Suspicious emails must be reported with the "Report phishing" button in the mail client, or forwarded to security@nimbus-analytics.example. Do not click links or open attachments in a suspicious email. The security team runs a simulated phishing test every quarter; employees who click a simulated link are enrolled in a 20-minute refresher course.
+
+Software installation
+Only software from the Nimbus Self-Service catalogue may be installed on company devices. Requests for other software are reviewed by the security team within 5 working days.

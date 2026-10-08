@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RAG Studio · Learning Visualiser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/theater.css">
+  <!-- Three.js for the 3D embedding space; LottieFiles' official player for the animations. -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@lottiefiles/dotlottie-wc@0.9.28/+esm"></script>
+</head>
+<body>
+
+<!-- ================= Top navigation ================= -->
+<nav class="topbar">
+  <div class="brand">
+    <dotlottie-wc class="brand-anim" src="/static/lottie/orbit.json" autoplay loop></dotlottie-wc>
+    <div><b>Ascension</b><span>RAG Studio</span></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="pipeline">Pipeline</button>
+    <button class="tab" data-tab="lab">Chunking Lab</button>
+    <button class="tab" data-tab="evals">Evals</button>
+    <!-- One page per RAG architecture: pick one to watch its animated flow and run it on YOUR files. -->
+    <div class="nav-dd" id="arch-dd">
+      <button id="arch-dd-btn">RAG Architectures ▾</button>
+      <div class="dd-menu" id="arch-menu"></div>
+    </div>
+  </div>
+  <div class="chips" id="status-chips"></div>
+</nav>
+
+<!-- ================= Hero: title + live 3D embedding space ================= -->
+<header class="hero">
+  <div class="hero-copy">
+    <div class="eyebrow">Enterprise RAG · Learning Visualiser</div>
+    <h1>See every step of<br><span class="grad">retrieval-augmented generation.</span></h1>
+    <p>Ingest documents, pick a search strategy, and walk through the pipeline one step at a time -
+       dense, BM25, hybrid fusion, MQE and HyDE, re-ranking, answer and reflection.</p>
+    <div class="legend">
+      <span><i style="background:#7c3aed"></i>HR</span><span><i style="background:#0891b2"></i>IT</span>
+      <span><i style="background:#d97706"></i>Finance</span><span><i style="background:#e11d48"></i>Product</span>
+      <span><i style="background:#059669"></i>General</span>
+      <span><i class="diamond"></i>Query</span><span><i class="halo"></i>BM25 hit</span><span><i class="gold"></i>Final top</span>
+    </div>
+  </div>
+  <div class="space-card">
+    <div class="space-title">Embedding space <small id="space-note">3D PCA of the vectors · drag to rotate</small></div>
+    <div id="space3d"></div>
+    <div id="space-tip" class="space-tip"></div>
+  </div>
+</header>
+
+<!-- ================= The four pipeline stages (Lottie) ================= -->
+<section class="rail">
+  <div class="stage-card ingest" id="box-ingest">
+    <dotlottie-wc src="/static/lottie/ingest.json" autoplay loop></dotlottie-wc>
+    <div><b>1 · Ingest</b><span>load · chunk · embed · store</span></div>
+  </div>
+  <div class="stage-card retrieve" id="box-retrieve">
+    <dotlottie-wc src="/static/lottie/retrieve.json" autoplay loop></dotlottie-wc>
+    <div><b>2 · Retrieve</b><span>expand · filter · dense · BM25 · fuse · re-rank</span></div>
+  </div>
+  <div class="stage-card generate" id="box-generate">
+    <dotlottie-wc src="/static/lottie/generate.json" autoplay loop></dotlottie-wc>
+    <div><b>3 · Generate</b><span>tool call · prompt · answer · reflect</span></div>
+  </div>
+  <div class="stage-card evaluate" id="box-evaluate">
+    <dotlottie-wc src="/static/lottie/evaluate.json" autoplay loop></dotlottie-wc>
+    <div><b>4 · Evaluate</b><span>RAGAS · DeepEval · LangSmith</span></div>
+  </div>
+</section>
+
+<section class="tracker">
+  <div class="track-row"><span class="track-label">Ingest</span><div id="track-ingest"></div></div>
+  <div class="track-row"><span class="track-label">Query</span><div id="track-query"></div></div>
+</section>
+
+<!-- ================= TAB: PIPELINE ================= -->
+<main class="tab-panel active" id="tab-pipeline">
+  <aside class="panel kb">
+    <h2>Knowledge base</h2>
+    <div class="kb-count"><span id="kb-total">0</span> chunks in Pinecone</div>
+    <div class="muted small" id="kb-index"></div>
+
+    <label>Chunking strategy <select id="strategy"></select></label>
+    <label>Chunk size <output id="size-out"></output><input type="range" id="size" min="100" max="1200" step="20"></label>
+    <label>Overlap <output id="overlap-out"></output><input type="range" id="overlap" min="0" max="300" step="10"></label>
+
+    <label>Big files
+      <select id="big-scope">
+        <option value="part">First part only (fast, ~200,000 characters)</option>
+        <option value="whole">The whole file (slow, costs a little)</option>
+      </select>
+    </label>
+    <div class="kb-loading" id="kb-loading" hidden></div>
+
+    <button id="btn-ingest-samples" class="primary">Ingest sample docs</button>
+    <button id="btn-reset" class="danger">Empty the knowledge base</button>
+
+    <h3>Add a document live</h3>
+    <label class="drop" id="drop">
+      <input type="file" id="file-input" accept=".pdf,.txt,.md" hidden>
+      <b>Drop a PDF / TXT / MD</b><small>or click to choose</small>
+    </label>
+    <div class="upload-note" id="upload-note" hidden></div>
+    <button id="btn-demo-upload" class="ghost">Upload demo file (office move)</button>
+    <ul class="doc-list" id="doc-list"></ul>
+  </aside>
+
+  <section class="center">
+    <div class="panel ask-panel">
+      <form class="ask" id="ask-form">
+        <input id="question" placeholder="Ask the knowledge base a question…" autocomplete="off">
+        <button class="primary">Ask</button>
+      </form>
+      <div class="examples" id="examples"></div>
+
+      <div class="controls">
+        <label>Search strategy
+          <select id="search-strategy">
+            <option value="dense">Dense (semantic)</option>
+            <option value="bm25">BM25 (keyword)</option>
+            <option value="hybrid" selected>Hybrid (dense + BM25, RRF)</option>
+            <option value="hybrid_expansion">Hybrid + query expansion</option>
+          </select>
+        </label>
+        <label>Query expansion
+          <select id="expansion">
+            <option value="mqe">MQE - Multi-Query Expansion</option>
+            <option value="hyde">HyDE - Hypothetical Document</option>
+          </select>
+        </label>
+        <label class="switch"><input type="checkbox" id="step-mode" checked><span></span>Step-by-step</label>
+      </div>
+      <div class="explainer" id="explainer"></div>
+    </div>
+
+    <div class="funnel" id="funnel"></div>
+
+    <div class="panel lens-panel">
+      <div class="lens-head">
+        <h2>Search lens <small>every chunk in the knowledge base</small></h2>
+        <div class="lens-key"><span class="k-d">D dense</span><span class="k-k">K BM25</span><span class="k-f">F fused</span><span class="k-star">★ final</span></div>
+      </div>
+      <div class="lens-note" id="lens-note"></div>
+      <div class="lens" id="lens"></div>
+    </div>
+
+    <div class="feed" id="feed">
+      <div class="empty">Ingest the sample docs, choose a strategy, then ask a question.<br>Each stage appears here as it runs.</div>
+    </div>
+  </section>
+
+  <aside class="panel latency">
+    <h2>Latency per stage</h2>
+    <div id="latency-bars" class="bars"><div class="muted small">Run something to see timings.</div></div>
+    <p class="muted small" id="latency-note">Measured on the server. LLM and network calls usually dominate; BM25 is almost free.</p>
+    <h3>Models</h3>
+    <div id="model-info" class="small"></div>
+  </aside>
+</main>
+
+<!-- ================= TAB: CHUNKING LAB ================= -->
+<main class="tab-panel" id="tab-lab">
+  <div class="panel lab-controls">
+    <label>Document <select id="lab-file"></select></label>
+    <label>Chunk size <output id="lab-size-out"></output><input type="range" id="lab-size" min="100" max="1200" step="20" value="400"></label>
+    <label>Overlap <output id="lab-overlap-out"></output><input type="range" id="lab-overlap" min="0" max="300" step="10" value="60"></label>
+    <p class="muted small">Highlighted text at the top of a chunk = the overlap it shares with the previous chunk.</p>
+  </div>
+  <div class="lab-columns" id="lab-columns"></div>
+</main>
+
+<!-- ================= TAB: EVALS ================= -->
+<main class="tab-panel" id="tab-evals">
+  <div class="panel eval-intro">
+    <h2>Evaluate the pipeline</h2>
+    <p>Each question in <code>data/eval_set.json</code> runs through the full pipeline with the strategy you pick below, then an LLM judge scores it.</p>
+    <ul class="small">
+      <li><b>Faithfulness</b> - are the answer's claims supported by the retrieved chunks?</li>
+      <li><b>Answer relevancy</b> - does the answer address the question?</li>
+      <li><b>Context precision</b> - are the useful chunks ranked first?</li>
+      <li><b>Context recall</b> - did retrieval find everything the reference answer needs?</li>
+    </ul>
+    <div class="run-row" style="margin:10px 0">
+      <label>Search strategy to evaluate
+        <select id="eval-strategy">
+          <option value="dense">Dense (semantic)</option>
+          <option value="bm25">BM25 (keyword)</option>
+          <option value="hybrid" selected>Hybrid (dense + BM25, RRF)</option>
+          <option value="hybrid_expansion">Hybrid + MQE</option>
+        </select>
+      </label>
+    </div>
+    <p class="muted small">Tip: edit <code>data/eval_set.json</code> with questions and reference answers from YOUR documents, run the same eval once per strategy, and compare the scores.</p>
+    <button class="primary" id="btn-ragas">Run RAGAS</button>
+    <button class="primary" id="btn-deepeval">Run DeepEval (pass / fail)</button>
+    <p class="muted small" id="langsmith-note"></p>
+  </div>
+  <div class="feed" id="eval-feed"></div>
+</main>
+
+<!-- ================= TAB: ONE RAG ARCHITECTURE (chosen from the top menu) ================= -->
+<main class="tab-panel" id="tab-arch">
+  <div class="panel">
+    <div class="arch-head">
+      <div>
+        <div class="eyebrow">RAG architecture</div>
+        <h2 id="arch-name"></h2>
+        <p class="arch-tag" id="arch-tag"></p>
+        <div class="kidbox" id="arch-kid"></div>
+      </div>
+      <div class="pros"><div class="good" id="arch-good"></div><div class="weak" id="arch-weak"></div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="explain-bar">
+      <h2 style="margin:0">How it flows</h2>
+      <button class="primary" id="arch-play">▶ Play animated explainer</button>
+      <button class="ghost" id="arch-stop" hidden>■ Stop</button>
+      <span class="kb-strip" id="arch-kb"></span>
+    </div>
+    <div class="flow-wrap" id="arch-flow-wrap"><div class="flow" id="arch-flow"></div><div class="token" id="arch-token" hidden></div></div>
+    <div class="explain-cap" id="arch-cap"><span class="ic">👆</span><div><b>Press play</b><p>A glowing dot will travel through every step, using the files you uploaded on the Pipeline page.</p></div></div>
+  </div>
+
+  <div class="panel run-box">
+    <h2 style="margin:0">Run it on your knowledge base</h2>
+    <div class="run-row">
+      <input type="text" id="arch-question" placeholder="Ask something about your uploaded files…" autocomplete="off">
+      <button class="ghost" id="arch-suggest">✨ Suggest a question</button>
+    </div>
+    <div class="run-row">
+      <button class="primary" id="arch-run">Run this architecture</button>
+      <label class="small"><input type="checkbox" id="arch-step" checked> step-by-step (click to advance)</label>
+    </div>
+  </div>
+  <div class="feed" id="arch-feed"></div>
+</main>
+
+<!-- ================= The animated stage: sits in the MIDDLE of the page during a run ================= -->
+<div class="theater" id="theater" hidden>
+  <div class="th-card">
+    <div class="th-head"><b id="th-title"></b><span class="th-step" id="th-step"></span><button class="ghost" id="btn-th-min" title="Shrink / expand the animation">⤢</button></div>
+    <div class="th-scene" id="th-scene"></div>
+    <div class="th-kid" id="th-kid"></div>
+    <div class="th-tech" id="th-tech"></div>
+    <div class="th-actions">
+      <div class="th-next" id="th-next"></div>
+      <button class="ghost" id="btn-run-all" disabled>Run to end ⏭</button>
+      <button class="primary" id="btn-next" disabled>Next step ▶</button>
+      <button class="primary" id="btn-th-close" hidden>Close ✕</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module" src="/static/js/main.js"></script>
+</body>
+</html>
